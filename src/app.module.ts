@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
-import { DBConfigService } from 'configs/dbconfig.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DBConfigModule } from 'configs/dbconfig.module';
+import { TypeOrmConfigService } from 'configs/typeorm-config.service';
 
 @Module({
   imports: [
@@ -16,20 +16,10 @@ import { DBConfigModule } from 'configs/dbconfig.module';
     DBConfigModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule, DBConfigModule],
-      inject: [DBConfigService],
-      useFactory: (dbConfigService: DBConfigService) => ({
-        type: 'postgres',
-        host: dbConfigService.dbHost,
-        port: dbConfigService.dbPort,
-        username: dbConfigService.dbUsername,
-        password: dbConfigService.dbPassword,
-        database: dbConfigService.dbName,
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        logging: true,
-      }),
+      useClass: TypeOrmConfigService,
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, TypeOrmConfigService],
 })
 export class AppModule {}
