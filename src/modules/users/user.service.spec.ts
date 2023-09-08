@@ -47,8 +47,9 @@ describe('UsersService', () => {
 
     mockRepository.create.mockReturnValue(user);
     mockRepository.save.mockResolvedValue(user);
+    const { password, ...sanitizeUser } = user;
 
-    expect(await service.create(createUserDto)).toEqual(user);
+    expect(await service.create(createUserDto)).toEqual(sanitizeUser);
     expect(mockRepository.create).toHaveBeenCalledWith(createUserDto);
     expect(mockRepository.save).toHaveBeenCalledWith(user);
   });

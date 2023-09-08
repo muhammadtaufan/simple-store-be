@@ -12,28 +12,42 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  private sanitizeUser(user: User): Partial<User> {
+    const { password, created_at, updated_at, ...sanitizedUser } = user;
+    return sanitizedUser;
+  }
+
+  async create(createUserDto: CreateUserDto): Promise<Partial<User>> {
     const user = this.usersRepository.create(createUserDto);
     try {
       const savedUser = await this.usersRepository.save(user);
-      return savedUser;
+      return this.sanitizeUser(savedUser);
     } catch (error) {
       console.error('Error while saving user', error);
       throw new Error('Failed to save user');
     }
   }
 
-  findOne(user_id: string): Promise<User> {
-    return this.usersRepository.findOne({ where: { user_id: user_id } });
+  findOne(user_id: string): Promise<Partial<User>> {
+    return this.usersRepository
+      .findOne({ where: { user_id: user_id } })
+      .then((user) => this.sanitizeUser(user));
   }
 
-  async update(user_id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(
+    user_id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<Partial<User>> {
     const existingUser = await this.usersRepository.findOne({
       where: { user_id: user_id },
     });
     if (!existingUser) {
       throw new NotFoundException(`User with ID ${user_id} not found`);
     }
-    return this.usersRepository.save({ ...existingUser, ...updateUserDto });
+    const updatedUser = await this.usersRepository.save({
+      ...existingUser,
+      ...updateUserDto,
+    });
+    return this.sanitizeUser(updatedUser);
   }
 }
